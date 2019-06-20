@@ -36,23 +36,56 @@
 	<delete dir="${jar.dir}"/>
 	<delete dir="${build.dir}/lib"/>
    </target>
-    <target name="jar" depends="build">
+      <target name="jar" depends="build">
         <mkdir dir="${jar.dir}"/>
         <copy todir="${build.dir}/lib" flatten="true">
             <path refid="libraries-path"/>
         </copy>
 
-        <!--<manifestclasspath property="manifest.classpath" jarfile="${jar.file}">
+      <manifestclasspath property="manifest.classpath" jarfile="${jar.file}">
             <classpath refid="master-classpath"/>
-        </manifestclasspath>-->
+        </manifestclasspath>
 
         <jar destfile="${jar.file}" basedir="${build.dir}" includes = "./**">
-           <!-- <manifest>
+		<zipgroupfileset dir="${lib.dir}">
+				<include name="**/*.jar" />
+		</zipgroupfileset>
+          <manifest>
                 <attribute name="Main-Class" value="${main-class}"/>
                 <attribute name="Class-Path" value="${manifest.classpath}"/>
-            </manifest>-->
+            </manifest>
+	<zipfileset src="${dist.lib.dir}/dependencies-all.jar" 
+                                excludes="META-INF/*.SF" />
         </jar>  
     </target>
+	<target name="copy-dependencies">
+
+		<mkdir dir="${dist.lib.dir}" />
+
+		<jar jarfile="${dist.lib.dir}/dependencies-all.jar">
+			<zipgroupfileset dir="${lib.dir}">
+				<include name="**/*.jar" />
+			</zipgroupfileset>
+		</jar>
+
+	</target>
+
+	<!-- jar it, extract above dependency-all.jar and zip it with project files -->
+	<target name="jar" depends="compile, copy-dependencies" 
+                description="package, output to JAR">
+
+		<mkdir dir="${dist.dir}" />
+		<mkdir dir="${dist.lib.dir}" />
+
+		<jar jarfile="${dist.dir}/${projectName}.jar" basedir="${build.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="${main-class}" />
+			</manifest>
+			<zipfileset src="${dist.lib.dir}/dependencies-all.jar" 
+                                excludes="META-INF/*.SF" />
+		</jar>
+
+	</target>
 
     <target name="run" depends="jar">
         <java jar="${jar.file}" fork="true"/>
